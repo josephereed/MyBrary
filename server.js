@@ -6,10 +6,11 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser');  
 const indexRouter = require('./routes/index.js');
 const authorRouter = require('./routes/authors');
+const bookRouter = require('./routes/books')
 
 // Connect to mongoose
 const db = require('./config/keys').mongoURI;
-mongoose.connect(db)
+mongoose.connect(db, {useNewUrlParser: true, useUnifiedTopology: true } )
   .then(() => console.log('MongoDB connected...'))
   .catch(error => console.log(error))
 
@@ -23,6 +24,7 @@ app.use(bodyParser.urlencoded({ limit: '10mb', extended: false }))
 
 app.use('/', indexRouter);
 app.use('/authors', authorRouter);
+app.use('/books', bookRouter)
 
 app.listen(PORT);
 
