@@ -4,6 +4,8 @@ const expressLayouts = require('express-ejs-layouts');
 const PORT = process.env.PORT || 3000;
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');  
+const methodOverride = require('method-override');
+
 const indexRouter = require('./routes/index.js');
 const authorRouter = require('./routes/authors');
 const bookRouter = require('./routes/books')
@@ -19,6 +21,7 @@ var path = require ('path');
 app.use(express.static(path.join(__dirname + '/views')));
 app.set('layout', 'layouts/layout.ejs');
 app.use(expressLayouts);
+app.use(methodOverride('_method'));
 app.use(express.static('public'));
 app.use(bodyParser.urlencoded({ limit: '10mb', extended: false })) 
 
