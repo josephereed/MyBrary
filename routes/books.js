@@ -3,23 +3,23 @@ const router = express.Router()
 const Book = require('../models/book')
 const Author = require('../models/author')
 const imageMimeTypes = ['image/jpeg', 'image/png', 'image/gif']
-// All Books route
 
+// All Books Route
 router.get('/', async (req, res) => {
   let query = Book.find()
   if (req.query.title != null && req.query.title != '') {
     query = query.regex('title', new RegExp(req.query.title, 'i'))
   }
   if (req.query.publishedBefore != null && req.query.publishedBefore != '') {
-    query = query.lte(publishDate, req.query.publishedBefore)
-  } 
+    query = query.lte('publishDate', req.query.publishedBefore)
+  }
   if (req.query.publishedAfter != null && req.query.publishedAfter != '') {
-    query = query.gte(publishAfter, req.query.publishedAfter)
+    query = query.gte('publishDate', req.query.publishedAfter)
   }
   try {
     const books = await query.exec()
     res.render('books/index', {
-      books: books, 
+      books: books,
       searchOptions: req.query
     })
   } catch {
@@ -27,7 +27,7 @@ router.get('/', async (req, res) => {
   }
 })
 
-// New book route
+// New Book Route
 router.get('/new', async (req, res) => {
   renderNewPage(res, new Book())
 })
@@ -35,22 +35,25 @@ router.get('/new', async (req, res) => {
 // Create Book Route
 router.post('/', async (req, res) => {
   const book = new Book({
-    title: req.body.title, 
-    description: req.body.description,
-    publishDate: new Date(req.body.publishDate), 
+    title: req.body.title,
+    author: req.body.author,
+    publishDate: new Date(req.body.publishDate),
     pageCount: req.body.pageCount,
-    author: req.body.author
+    description: req.body.description
   })
- saveCover(book, req.body.cover)
+  
+  saveCover(book, req.body.cover)
   try {
     const newBook = await book.save()
     res.redirect(`books/${newBook.id}`)
-  } catch {
+  } catch(e) {
+    console.log(e)
     renderNewPage(res, book, true)
   }
 })
 
-// Show Book route 
+
+// Show Book Route
 router.get('/:id', async (req, res) => {
   try {
     const book = await Book.findById(req.params.id)
@@ -62,8 +65,7 @@ router.get('/:id', async (req, res) => {
   }
 })
 
-// Edit book route
-
+// Edit Book Route
 router.get('/:id/edit', async (req, res) => {
   try {
     const book = await Book.findById(req.params.id)
@@ -76,9 +78,10 @@ router.get('/:id/edit', async (req, res) => {
 // Update Book Route
 router.put('/:id', async (req, res) => {
   let book
+
   try {
     book = await Book.findById(req.params.id)
-    book.title = req.body.title 
+    book.title = req.body.title
     book.author = req.body.author
     book.publishDate = new Date(req.body.publishDate)
     book.pageCount = req.body.pageCount
@@ -88,8 +91,7 @@ router.put('/:id', async (req, res) => {
     }
     await book.save()
     res.redirect(`/books/${book.id}`)
-  } catch(err){
-    console.log(err)
+  } catch {
     if (book != null) {
       renderEditPage(res, book, true)
     } else {
@@ -98,17 +100,17 @@ router.put('/:id', async (req, res) => {
   }
 })
 
+// Delete Book Page
 router.delete('/:id', async (req, res) => {
   let book
   try {
     book = await Book.findById(req.params.id)
     await book.remove()
     res.redirect('/books')
-  } catch(err) {
-    console.log(err)
+  } catch {
     if (book != null) {
-      res.render('books/show/', {
-        book: book, 
+      res.render('books/show', {
+        book: book,
         errorMessage: 'Could not remove book'
       })
     } else {
@@ -116,7 +118,6 @@ router.delete('/:id', async (req, res) => {
     }
   }
 })
-
 
 async function renderNewPage(res, book, hasError = false) {
   renderFormPage(res, book, 'new', hasError)
@@ -146,9 +147,8 @@ async function renderFormPage(res, book, form, hasError = false) {
   }
 }
 
-
 function saveCover(book, coverEncoded) {
-  if (coverEncoded == null) return 
+  if (coverEncoded == null) return
   const cover = JSON.parse(coverEncoded)
   if (cover != null && imageMimeTypes.includes(cover.type)) {
     book.coverImage = new Buffer.from(cover.data, 'base64')
